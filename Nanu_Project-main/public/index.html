@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aai Health Quest | Gamified Fitness Tracker</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .hero {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(rgba(10, 14, 39, 0.7), rgba(10, 14, 39, 0.7)),
+                url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            margin-top: -80px;
+            padding-top: 80px;
+            padding-bottom: 100px;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: var(--spacing-md);
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            margin-bottom: var(--spacing-md);
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-green-shadow);
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-top: -50px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: var(--spacing-md);
+            color: var(--gold);
+        }
+
+        .cta-section {
+            padding: var(--spacing-xl) 0;
+            text-align: center;
+            background-color: var(--bg-dark);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="logo">AAI HEALTH QUEST</div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                <a href="login.html" class="btn btn-outline" style="padding: 8px 16px;">Login</a>
+                <a href="register.html" class="btn btn-primary" style="padding: 8px 16px;">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container hero-content animate-slide-up">
+            <h1 class="hero-title">Level Up Your Health</h1>
+            <p class="hero-subtitle">Turn your daily workouts into epic quests. Earn XP, climb the leaderboard, and
+                redeem rewards as you crush your fitness goals.</p>
+            <div class="hero-actions">
+                <a href="register.html" class="btn btn-primary btn-lg">Start Your Quest</a>
+                <a href="#features" class="btn btn-outline btn-lg" style="margin-left: 10px;">Explore Quests</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="features" class="features">
+            <div class="card animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="feature-icon">⚔️</div>
+                <h3>Epic Quests</h3>
+                <p>Complete daily challenges and weekly milestones to earn massive XP and Health Points.</p>
+            </div>
+            <div class="card animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="feature-icon">🏆</div>
+                <h3>Global Ranks</h3>
+                <p>Compete with fitness warriors around the world. Secure your spot on the neon leaderboard.</p>
+            </div>
+            <div class="card animate-fade-in" style="animation-delay: 0.6s;">
+                <div class="feature-icon">💎</div>
+                <h3>Real Rewards</h3>
+                <p>Redeem your hard-earned Health Points for premium subscriptions and virtual items.</p>
+            </div>
+        </section>
+
+        <section class="cta-section animate-slide-up" style="margin-top: var(--spacing-xl);">
+            <h2>Ready to Begin?</h2>
+            <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">Join thousands of users
+                transformed by the quest for better health.</p>
+            <a href="register.html" class="btn btn-gold">Join the Quest Now</a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Aai Health Quest. All rights reserved.</p>
+            <p style="margin-top: 5px;">Built for Fitness Warriors</p>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if logged in
+        window.addEventListener('load', () => {
+            if (isLoggedIn()) {
+                const navLinks = document.getElementById('navLinks');
+                navLinks.innerHTML = `
+                    <a href="dashboard.html" class="nav-link">Dashboard</a>
+                    <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                    <a href="redemption.html" class="nav-link">Store</a>
+                    <button onclick="logout()" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

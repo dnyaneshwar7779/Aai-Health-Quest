@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quest Hall | Aai Health Quest</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .quest-hall {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .quest-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .quest-card.locked::before {
+            content: '🔒 Locked - Req. Level ' attr(data-level);
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-darker);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            color: var(--gold);
+        }
+
+        .quest-reward-tag {
+            display: inline-block;
+            background: rgba(0, 255, 65, 0.1);
+            color: var(--neon-green);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">AAI HEALTH QUEST</a>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="quests.html" class="nav-link active">Quests</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                <a href="redemption.html" class="nav-link">Store</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2 style="margin-bottom: var(--spacing-lg);">The Quest Hall</h2>
+
+        <div id="questHall" class="quest-hall">
+            <!-- Loading placeholder -->
+            <p>Gathering scrolls...</p>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        const navLinks = document.getElementById('navLinks');
+        if (isLoggedIn()) {
+            navLinks.innerHTML += '<button onclick="logout()" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>';
+        } else {
+            navLinks.innerHTML += '<a href="login.html" class="btn btn-outline" style="padding: 8px 16px;">Login</a>';
+        }
+
+        if (!isLoggedIn()) window.location.href = 'login.html';
+
+        async function initQuests() {
+            try {
+                const quests = await api.getQuests();
+                const activeQuests = await api.getActiveQuests();
+                const activeIds = activeQuests.map(uq => uq.Quest.id);
+
+                const hall = document.getElementById('questHall');
+                hall.innerHTML = quests.map(quest => `
+                    <div class="card quest-card ${quest.isLocked ? 'locked' : ''}" data-level="${quest.required_level}">
+                        <h4 style="color: var(--neon-green);">${quest.title}</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin: var(--spacing-sm) 0;">${quest.description}</p>
+                        <div style="margin-bottom: var(--spacing-md);">
+                            <span class="quest-reward-tag">+${quest.xp_reward} XP</span>
+                            <span class="quest-reward-tag" style="color: var(--gold); background: rgba(255, 215, 0, 0.1);">+${quest.health_points_reward} HP</span>
+                        </div>
+                        ${quest.isLocked ? '' :
+                        activeIds.includes(quest.id) ?
+                            '<button class="btn btn-outline" style="width: 100%;" disabled>Active</button>' :
+                            `<button onclick="startQuest(${quest.id})" class="btn btn-primary" style="width: 100%;">Accept Quest</button>`
+                    }
+                    </div>
+                `).join('');
+            } catch (error) {
+                showNotification('Error loading quests', 'error');
+            }
+        }
+
+        async function startQuest(id) {
+            try {
+                await api.startQuest(id);
+                showNotification('Quest accepted! Good luck, warrior.');
+                initQuests();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+
+        window.onload = initQuests;
+    </script>
+</body>
+
+</html>

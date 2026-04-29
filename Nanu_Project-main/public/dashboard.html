@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Aai Health Quest</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: var(--spacing-lg);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .user-stats-card {
+            text-align: center;
+        }
+
+        .level-badge {
+            width: 80px;
+            height: 80px;
+            background-color: var(--neon-green);
+            color: var(--bg-darker);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            margin: 0 auto var(--spacing-md);
+            box-shadow: var(--glow);
+        }
+
+        .stat-box {
+            display: flex;
+            justify-content: space-around;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat-item h4 {
+            color: var(--gold);
+            font-size: 18px;
+        }
+
+        .stat-item p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .plan-card {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .plan-icon {
+            font-size: 24px;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: var(--radius-sm);
+        }
+
+        .plan-info {
+            flex: 1;
+        }
+
+        .task-status {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: fit-content;
+        }
+
+        .task-status.pending {
+            color: var(--gold);
+        }
+
+        .task-status.completed {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+        }
+
+        .task-status.missed {
+            color: var(--error);
+            border-color: var(--error);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">AAI HEALTH QUEST</a>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="quests.html" class="nav-link">Quests</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                <a href="redemption.html" class="nav-link">Store</a>
+                <button onclick="logout()" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="dashboard-grid">
+            <!-- Sidebar Stats -->
+            <aside class="animate-slide-up">
+                <div class="card user-stats-card">
+                    <div id="levelBadge" class="level-badge">1</div>
+                    <h3 id="usernameDisplay">Warrior</h3>
+                    <p id="fitnessGoalDisplay" style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                        Level 1: 5k Steps</p>
+
+                    <div class="progress-info"
+                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                        <span>XP Progress</span>
+                        <span id="xpText">0 / 500</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="xpBar" class="progress-bar-fill" style="width: 0%;"></div>
+                    </div>
+
+                    <div class="stat-box">
+                        <div class="stat-item">
+                            <h4 id="hpDisplay">0</h4>
+                            <p>Health Pts</p>
+                        </div>
+                        <div class="stat-item">
+                            <h4 id="totalXpDisplay">0</h4>
+                            <p>Total XP</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: var(--spacing-lg);">
+                    <h4>Quick Log</h4>
+                    <a href="log-workout.html" class="btn btn-primary"
+                        style="width: 100%; margin-top: var(--spacing-md);">Log Activity</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <section class="animate-slide-up" style="animation-delay: 0.2s;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+                    <h2>Your Diet Plan</h2>
+                    <span id="planDateRange" style="color: var(--neon-green); font-size: 14px;"></span>
+                </div>
+
+                <div id="dietPlanCard" class="card" style="margin-bottom: var(--spacing-lg);">
+                    <p style="color: var(--text-muted); text-align: center; padding: 24px;">No plan available yet. Update
+                        your profile details to generate a plan.</p>
+                </div>
+
+                <h2 style="margin: var(--spacing-xl) 0 var(--spacing-lg);">Weekly Workout Tasks</h2>
+                <div class="card" style="margin-bottom: var(--spacing-md);">
+                    <div style="display:flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+                        <span>Task Progress</span>
+                        <span id="taskProgressText">0 / 0</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="taskProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div id="workoutTasksList">
+                    <p style="color: var(--text-muted); text-align: center; padding: 40px;">Workout tasks will appear after
+                        plan generation.</p>
+                </div>
+
+                <h2 style="margin: var(--spacing-xl) 0 var(--spacing-lg);">Active Quests</h2>
+                <div id="activeQuestsList">
+                    <p style="color: var(--text-muted); text-align: center; padding: 24px;">No active quests yet. Open the
+                        Quest Hall to start one.</p>
+                </div>
+
+                <h2 style="margin: var(--spacing-xl) 0 var(--spacing-lg);">Recent Activity</h2>
+                <div id="recentWorkoutsList">
+                    <p style="color: var(--text-muted); text-align: center; padding: 40px;">No workouts logged yet. Time
+                        to move!</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        if (!isLoggedIn()) window.location.href = 'login.html';
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function renderTaskProgress(progress) {
+            const completed = progress?.completed || 0;
+            const trackable = progress?.trackable_total || 0;
+            const percent = progress?.percent || 0;
+
+            document.getElementById('taskProgressText').textContent = `${completed} / ${trackable}`;
+            document.getElementById('taskProgressBar').style.width = `${percent}%`;
+        }
+
+        async function completeTask(taskId) {
+            const input = document.getElementById(`weight-${taskId}`);
+            const weight = Number(input?.value);
+
+            if (!weight || weight <= 0) {
+                showNotification('Enter your current weight to complete this task.', 'error');
+                return;
+            }
+
+            try {
+                const response = await api.completeWeeklyTask(taskId, weight);
+                showNotification(response.dietAdjustmentMessage || response.message);
+                await initDashboard();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+
+        window.completeTask = completeTask;
+
+        async function initDashboard() {
+            try {
+                // Load profile
+                const profile = await api.getProfile();
+                document.getElementById('usernameDisplay').textContent = profile.username;
+                document.getElementById('levelBadge').textContent = profile.current_level;
+                document.getElementById('fitnessGoalDisplay').textContent = profile.fitness_goal || 'General Wellness';
+                document.getElementById('hpDisplay').textContent = profile.health_points;
+                document.getElementById('totalXpDisplay').textContent = profile.total_xp;
+
+                const xpInLevel = profile.total_xp % 500;
+                const xpPercent = (xpInLevel / 500) * 100;
+                document.getElementById('xpBar').style.width = xpPercent + '%';
+                document.getElementById('xpText').textContent = `${xpInLevel} / 500 XP`;
+
+                // Load diet plan and weekly workout tasks
+                const dietPlan = profile.diet_plan;
+                if (dietPlan) {
+                    document.getElementById('planDateRange').textContent = `${dietPlan.startDate} to ${dietPlan.endDate}`;
+
+                    document.getElementById('dietPlanCard').innerHTML = `
+                        <h3 style="margin-bottom: var(--spacing-sm);">${dietPlan.goal} Plan</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">Follow this daily nutrition target and log your workouts according to the weekly task list.</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                            <div class="plan-card"><div class="plan-icon">kcal</div><div class="plan-info"><strong>${dietPlan.dailyTargets.calories}</strong><p style="font-size: 12px; color: var(--text-secondary);">Calories/day</p></div></div>
+                            <div class="plan-card"><div class="plan-icon">P</div><div class="plan-info"><strong>${dietPlan.dailyTargets.protein_g} g</strong><p style="font-size: 12px; color: var(--text-secondary);">Protein</p></div></div>
+                            <div class="plan-card"><div class="plan-icon">C</div><div class="plan-info"><strong>${dietPlan.dailyTargets.carbs_g} g</strong><p style="font-size: 12px; color: var(--text-secondary);">Carbs</p></div></div>
+                            <div class="plan-card"><div class="plan-icon">F</div><div class="plan-info"><strong>${dietPlan.dailyTargets.fats_g} g</strong><p style="font-size: 12px; color: var(--text-secondary);">Fats</p></div></div>
+                        </div>
+                        <div class="plan-card" style="align-items: flex-start;">
+                            <div class="plan-icon">Meal</div>
+                            <div class="plan-info">
+                                <p><strong>Breakfast:</strong> ${dietPlan.mealTemplate.breakfast}</p>
+                                <p><strong>Lunch:</strong> ${dietPlan.mealTemplate.lunch}</p>
+                                <p><strong>Snack:</strong> ${dietPlan.mealTemplate.snack}</p>
+                                <p><strong>Dinner:</strong> ${dietPlan.mealTemplate.dinner}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    const taskResponse = await api.getWeeklyTasks();
+                    renderTaskProgress(taskResponse.progress);
+                    const tasks = taskResponse.tasks || [];
+
+                    document.getElementById('workoutTasksList').innerHTML = tasks.map((task, index) => {
+                        const statusClass = task.status || 'pending';
+                        const isCompleted = statusClass === 'completed';
+                        const isMissed = statusClass === 'missed';
+                        return `
+                        <div class="plan-card animate-fade-in" style="animation-delay: ${index * 0.05}s; align-items: flex-start;">
+                            <div class="plan-icon">${index + 1}</div>
+                            <div class="plan-info">
+                                <h4>${escapeHtml(task.title)}</h4>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Due: ${task.due_date}</p>
+                                <div class="task-status ${statusClass}" style="margin-top: 8px;">${statusClass}</div>
+                                ${isCompleted
+                                    ? `<p style="font-size: 12px; color: var(--neon-green); margin-top: 8px;">Completed weight: ${task.completion_weight} kg</p>`
+                                    : ''}
+                                ${isMissed
+                                    ? '<p style="font-size: 12px; color: var(--error); margin-top: 8px;">Missed and auto-rescheduled to upcoming dates.</p>'
+                                    : ''}
+                                ${!isCompleted && !isMissed
+                                    ? `<div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                                        <input id="weight-${task.id}" type="number" step="0.1" min="1" placeholder="Enter current weight (kg)" class="form-input" style="max-width: 220px;">
+                                        <button class="btn btn-primary btn-sm" onclick="completeTask('${task.id}')">Mark Completed</button>
+                                    </div>`
+                                    : ''}
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+
+                    if (tasks.length === 0) {
+                        document.getElementById('workoutTasksList').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No tasks available right now.</p>';
+                        renderTaskProgress({ completed: 0, trackable_total: 0, percent: 0 });
+                    }
+                }
+
+                // Load active quests for user panel visibility
+                const activeQuests = await api.getActiveQuests();
+                const activeQuestsList = document.getElementById('activeQuestsList');
+                if (activeQuests.length > 0) {
+                    activeQuestsList.innerHTML = activeQuests.map((uq) => `
+                        <div class="plan-card animate-fade-in" style="align-items: flex-start;">
+                            <div class="plan-icon">Q</div>
+                            <div class="plan-info">
+                                <h4>${escapeHtml(uq.Quest.title)}</h4>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(uq.Quest.description)}</p>
+                                <div style="margin-top: 8px; font-size: 12px; color: var(--gold);">Progress: ${uq.progress} / ${uq.Quest.target_value}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Load recent workouts
+                const workouts = await api.getWorkouts();
+                const workoutList = document.getElementById('recentWorkoutsList');
+                if (workouts.length > 0) {
+                    workoutList.innerHTML = workouts.slice(0, 5).map(w => `
+                        <div class="plan-card animate-fade-in" style="background: rgba(22, 27, 54, 0.5);">
+                            <div class="plan-icon">Run</div>
+                            <div class="plan-info">
+                                <h4>${w.workout_type}</h4>
+                                <p style="font-size: 12px; color: var(--text-secondary);">${w.duration} mins • ${new Date(w.date).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                                <span style="color: var(--neon-green); font-weight: bold;">+${w.xp_earned} XP</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                showNotification('Error loading dashboard: ' + error.message, 'error');
+            }
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+
+</html>

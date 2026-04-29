@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Aai Health Quest</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <script src="../js/theme.js"></script>
+    <style>
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            background-color: var(--bg-dark);
+            border-right: 1px solid var(--border-color);
+            padding: var(--spacing-lg);
+        }
+
+        .admin-nav-item {
+            display: block;
+            padding: 12px;
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-sm);
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .admin-nav-item:hover,
+        .admin-nav-item.active {
+            background-color: var(--card-bg);
+            color: var(--neon-green);
+        }
+
+        .admin-content {
+            padding: var(--spacing-xl);
+            background-color: var(--bg-darker);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="logo" style="font-size: 18px; margin-bottom: 40px; color: var(--neon-green);">ADMIN PANEL</div>
+            <nav id="adminNav">
+                <a href="index.html" class="admin-nav-item active">Overview</a>
+                <a href="quests.html" class="admin-nav-item">Quests</a>
+                <a href="users.html" class="admin-nav-item">Users</a>
+                <a href="reviews.html" class="admin-nav-item">Moderation</a>
+                <a href="redemptions.html" class="admin-nav-item">Transactions</a>
+                <a href="messages.html" class="admin-nav-item">Support</a>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                <a href="../dashboard.html" class="admin-nav-item">&#8592; Back to User App</a>
+                <button onclick="handleLogout()" class="admin-nav-item"
+                    style="width: 100%; text-align: left; background: rgba(255,77,77,0.1); border: 1px solid #ff4d4d; border-radius: 4px; cursor: pointer; font-size: 15px; font-family: inherit; color: #ff4d4d; margin-top: 8px;">&#x2715; Logout</button>
+            </nav>
+        </aside>
+
+        <main class="admin-content">
+            <h2 style="margin-bottom: var(--spacing-lg);">System Overview</h2>
+
+            <div class="stat-grid">
+                <div class="card animate-fade-in" style="animation-delay: 0.1s;">
+                    <p style="font-size: 12px; color: var(--text-muted);">Total Warriors</p>
+                    <h3 id="totalUsers">0</h3>
+                </div>
+                <div class="card animate-fade-in" style="animation-delay: 0.2s;">
+                    <p style="font-size: 12px; color: var(--text-muted);">Quests Conquered</p>
+                    <h3 id="activeQuests">0</h3>
+                </div>
+                <div class="card animate-fade-in" style="animation-delay: 0.3s;">
+                    <p style="font-size: 12px; color: var(--text-muted);">Points Exchanged</p>
+                    <h3 id="pointsRedeemed">0</h3>
+                </div>
+                <div class="card animate-fade-in" style="animation-delay: 0.4s;">
+                    <p style="font-size: 12px; color: var(--text-muted);">Pending Tickets</p>
+                    <h3 id="pendingMessages">0</h3>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-xl);">
+                <div>
+                    <h3>Recent Recruitments</h3>
+                    <table style="margin-top: var(--spacing-md);">
+                        <thead>
+                            <tr>
+                                <th>Warrior</th>
+                                <th>Email</th>
+                                <th>Level</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable"></tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3>Recent Transactions</h3>
+                    <table style="margin-top: var(--spacing-md);">
+                        <thead>
+                            <tr>
+                                <th>Warrior</th>
+                                <th>Reward</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="redemptionsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        if (!isAdmin()) window.location.href = 'login.html';
+
+        function handleLogout() {
+            adminLogout();
+        }
+
+        async function initAdmin() {
+            try {
+                const users = await api.admin.getUsers();
+                const messages = await api.admin.getMessages();
+                const trans = await api.admin.getTransactions();
+                const leaderboard = await api.getLeaderboard();
+
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('activeQuests').textContent = leaderboard.reduce((sum, e) => sum + (e.quests_completed || 0), 0);
+                document.getElementById('pointsRedeemed').textContent = trans.reduce((sum, t) => sum + t.points_spent, 0);
+                document.getElementById('pendingMessages').textContent = messages.filter(m => m.status !== 'resolved').length;
+
+                // Recent Users
+                const table = document.getElementById('usersTable');
+                table.innerHTML = users.slice(-5).reverse().map(u => `
+                    <tr>
+                        <td style="color: var(--neon-green); font-weight: bold;">${u.username}</td>
+                        <td style="font-size: 12px;">${u.email}</td>
+                        <td><span style="background:var(--neon-green); color:var(--bg-dark); padding:2px 6px; border-radius:4px; font-size:10px;">Lvl ${u.current_level}</span></td>
+                    </tr>
+                `).join('');
+
+                // Recent Redemptions
+                const transTable = document.getElementById('redemptionsTable');
+                transTable.innerHTML = trans.slice(-5).reverse().map(t => `
+                    <tr>
+                        <td style="font-weight: bold;">${(t.User && t.User.username) ? t.User.username : 'Unknown User'}</td>
+                        <td style="font-size: 12px;">${t.reward_name}</td>
+                        <td><span style="color:var(--neon-green); font-size:10px;">Success</span></td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        window.onload = initAdmin;
+    </script>
+</body>
+
+</html>

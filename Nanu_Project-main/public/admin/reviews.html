@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Queue | Admin</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <script src="../js/theme.js"></script>
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/global.css">
+</head>
+
+<body style="background: var(--bg-darker); color: var(--text-main);">
+    <div style="display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;">
+        <aside style="background: var(--bg-dark); border-right: 1px solid var(--border-color); padding: 20px;">
+            <div class="logo" style="font-size: 18px; margin-bottom: 40px; color: var(--neon-green);">ADMIN PANEL</div>
+            <nav>
+                <a href="index.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Overview</a>
+                <a href="quests.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Quests</a>
+                <a href="users.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Users</a>
+                <a href="reviews.html"
+                    style="display: block; padding: 12px; color: var(--neon-green); background: var(--card-bg); border-radius: 4px; text-decoration: none;">Moderation</a>
+                <a href="redemptions.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Transactions</a>
+                <a href="messages.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Support</a>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                <a href="../dashboard.html" style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">&#8592; Back to User App</a>
+                <button onclick="adminLogout()" style="display: block; width: 100%; padding: 12px; color: #ff4d4d; background: rgba(255,77,77,0.1); border: 1px solid #ff4d4d; border-radius: 4px; text-align: left; cursor: pointer; font-size: 15px; font-family: inherit; margin-top: 8px;">&#x2715; Logout</button>
+            </nav>
+        </aside>
+
+        <main style="padding: 40px;">
+            <h2 style="margin-bottom: 30px;">Review Moderation Queue</h2>
+
+            <div id="moderationList" style="display: grid; gap: 20px;">
+                <!-- Data loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        if (!isAdmin()) window.location.href = 'login.html';
+
+        async function loadQueue() {
+            try {
+                const leaderboard = await api.admin.getRatings();
+
+                // For this project, we'll assume the admin sees a specific set or we use dummy pending for demo
+                const container = document.getElementById('moderationList');
+
+                // Filter for demo or show real if available
+                if (leaderboard.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No reviews in the queue.</p>';
+                    return;
+                }
+
+                container.innerHTML = leaderboard.map(entry => `
+                    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: var(--gold);">Warrior: ${entry.username}</h4>
+                            <p style="font-size: 14px;">Self-Rating: ${'⭐'.repeat(Math.max(0, Math.min(5, Math.round(entry.rating || 0))))}</p>
+                            <span style="font-size: 10px; color: ${entry.is_approved ? 'var(--neon-green)' : 'var(--text-muted)'}">
+                                ${entry.is_approved ? 'Approved' : 'Pending Verification'}
+                            </span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            ${!entry.is_approved ?
+                        `<button onclick="approve(${entry.id})" class="btn btn-primary btn-sm">Approve</button>` :
+                        ''}
+                            <button onclick="reject(${entry.id})" class="btn btn-outline btn-sm" style="color: #ff4d4d; border-color: #ff4d4d;">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) { console.error(error); }
+        }
+
+        async function approve(id) {
+            try {
+                await api.admin.approveRating(id);
+                showNotification('Rating approved!');
+                loadQueue();
+            } catch (error) { showNotification(error.message, 'error'); }
+        }
+
+        async function reject(id) {
+            if (!confirm('Reject and delete this rating?')) return;
+            try {
+                await api.admin.deleteRating(id);
+                showNotification('Rating rejected');
+                loadQueue();
+            } catch (error) { showNotification(error.message, 'error'); }
+        }
+
+        window.onload = loadQueue;
+    </script>
+</body>
+
+</html>

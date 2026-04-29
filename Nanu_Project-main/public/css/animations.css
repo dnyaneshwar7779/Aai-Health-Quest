@@ -1,0 +1,95 @@
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes glow-pulse {
+    0% {
+        box-shadow: 0 0 5px var(--neon-green-shadow);
+    }
+
+    50% {
+        box-shadow: 0 0 20px var(--neon-green-shadow);
+    }
+
+    100% {
+        box-shadow: 0 0 5px var(--neon-green-shadow);
+    }
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.animate-glow {
+    animation: glow-pulse 3s infinite ease-in-out;
+}
+
+.animate-slide-up {
+    animation: slide-up 0.5s forwards ease-out;
+}
+
+.animate-fade-in {
+    animation: fade-in 0.8s forwards;
+}
+
+/* XP Gain Animation */
+.xp-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--neon-green);
+    color: var(--bg-darker);
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    box-shadow: var(--glow);
+    z-index: 2000;
+    animation: slide-up 0.3s ease-out, fade-out 0.5s 2.5s forwards;
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}

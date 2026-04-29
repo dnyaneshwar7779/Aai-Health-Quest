@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Aai Health Quest</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .auth-container {
+            max-width: 500px;
+            margin: var(--spacing-xl) auto;
+        }
+
+        .biometrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">AAI HEALTH QUEST</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="auth-container card animate-slide-up">
+            <h2 style="margin-bottom: var(--spacing-md); text-align: center;">Join the Quest</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="username" class="form-input" required placeholder="Choose your warrior name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-input" required placeholder="warrior@health.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" required placeholder="••••••••">
+                </div>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: var(--spacing-lg) 0;">
+                <h4 style="margin-bottom: var(--spacing-sm); color: var(--gold);">Physical Biometrics</h4>
+                <div class="biometrics-grid">
+                    <div class="form-group">
+                        <label class="form-label">Height (cm)</label>
+                        <input type="number" id="height" class="form-input" placeholder="175">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Weight (kg)</label>
+                        <input type="number" id="weight" class="form-input" placeholder="70">
+                    </div>
+                </div>
+                <div class="biometrics-grid">
+                    <div class="form-group">
+                        <label class="form-label">Age</label>
+                        <input type="number" id="age" class="form-input" placeholder="25">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Goal</label>
+                        <select id="goalType" class="form-input" required>
+                            <option value="weight_loss">Weight Loss</option>
+                            <option value="weight_gain">Weight Gain</option>
+                            <option value="other">Anything Else (General Wellness)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Activity Level</label>
+                    <select id="activityLevel" class="form-input">
+                        <option value="low">Low (mostly sitting)</option>
+                        <option value="moderate" selected>Moderate (some activity)</option>
+                        <option value="high">High (active lifestyle)</option>
+                        </select>
+                    </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; margin-top: var(--spacing-md);">Initialize Profile</button>
+            </form>
+            <p style="text-align: center; margin-top: var(--spacing-md); color: var(--text-secondary);">
+                Already a warrior? <a href="login.html" style="color: var(--neon-green);">Login here</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Initializing...';
+
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                height: document.getElementById('height').value,
+                weight: document.getElementById('weight').value,
+                age: document.getElementById('age').value,
+                goal_type: document.getElementById('goalType').value,
+                activity_level: document.getElementById('activityLevel').value
+            };
+
+            try {
+                const response = await api.register(userData);
+                setToken(response.token);
+                showNotification('Warrior initialized! Welcome to Aai Health Quest.');
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
+            } catch (error) {
+                showNotification(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Initialize Profile';
+            }
+        });
+    </script>
+</body>
+
+</html>

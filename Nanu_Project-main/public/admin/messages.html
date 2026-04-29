@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Center | Admin</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <script src="../js/theme.js"></script>
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <style>
+        .message-card {
+            border-left: 4px solid var(--gold);
+            margin-bottom: 20px;
+        }
+
+        .message-card.resolved {
+            border-left-color: var(--neon-green);
+            opacity: 0.8;
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body style="background: var(--bg-darker); color: var(--text-main);">
+    <div style="display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;">
+        <aside style="background: var(--bg-dark); border-right: 1px solid var(--border-color); padding: 20px;">
+            <div class="logo" style="font-size: 18px; margin-bottom: 40px; color: var(--neon-green);">ADMIN PANEL</div>
+            <nav>
+                <a href="index.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Overview</a>
+                <a href="quests.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Quests</a>
+                <a href="users.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Users</a>
+                <a href="reviews.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Moderation</a>
+                <a href="redemptions.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Transactions</a>
+                <a href="messages.html"
+                    style="display: block; padding: 12px; color: var(--neon-green); background: var(--card-bg); border-radius: 4px; text-decoration: none;">Support</a>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                <a href="../dashboard.html" style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">&#8592; Back to User App</a>
+                <button onclick="adminLogout()" style="display: block; width: 100%; padding: 12px; color: #ff4d4d; background: rgba(255,77,77,0.1); border: 1px solid #ff4d4d; border-radius: 4px; text-align: left; cursor: pointer; font-size: 15px; font-family: inherit; margin-top: 8px;">&#x2715; Logout</button>
+            </nav>
+        </aside>
+
+        <main style="padding: 40px;">
+            <h2 style="margin-bottom: 30px;">Warrior Support Center</h2>
+
+            <div id="messageList" style="display: grid; gap: 20px;">
+                <!-- Data loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Reply Modal -->
+    <div id="replyModal"
+        style="display: none; position: fixed; inset: 0; background: var(--hero-overlay); backdrop-filter: blur(5px); z-index: 2000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <h3>Respond to Warrior</h3>
+            <div id="originalMessage"
+                style="background: var(--bg-dark); padding: 15px; border-radius: var(--radius-sm); margin: 15px 0; font-size: 14px; color: var(--text-secondary);">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Your Response</label>
+                <textarea id="adminResponse" class="form-input" rows="4"
+                    placeholder="Your guidance to the warrior..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="closeReplyModal()" class="btn btn-outline" style="flex: 1;">Cancel</button>
+                <button onclick="submitResponse()" class="btn btn-primary" style="flex: 1;">Resolve & Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        if (!isAdmin()) window.location.href = 'login.html';
+
+        let selectedMessageId = null;
+
+        async function loadMessages() {
+            try {
+                const messages = await api.admin.getMessages();
+                const container = document.getElementById('messageList');
+
+                if (messages.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">The support queue is empty. Peace reigns.</p>';
+                    return;
+                }
+
+                container.innerHTML = messages.map(m => `
+                    <div class="card message-card ${m.status === 'resolved' ? 'resolved' : ''}">
+                        <div style="display: flex; justify-content: space-between;">
+                            <h4 style="color: var(--gold);">${m.subject}</h4>
+                            <span class="badge" style="background: ${m.status === 'resolved' ? 'var(--neon-green)' : 'var(--gold)'}; color: var(--bg-dark);">
+                                ${m.status}
+                            </span>
+                        </div>
+                        <p style="font-size: 14px; margin: 10px 0;">${m.message || ''}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: end;">
+                            <div style="font-size: 11px; color: var(--text-muted);">
+                                From: ${(m.User && m.User.username) ? m.User.username : 'Unknown User'} (${(m.User && m.User.email) ? m.User.email : '-'})<br>
+                                Date: ${new Date(m.createdAt).toLocaleString()}
+                            </div>
+                            ${m.status !== 'resolved' ?
+                        `<button onclick="openReplyModal(${m.id}, '${(m.message || '').replace(/'/g, "\\'")}')" class="btn btn-primary btn-sm">Respond</button>` :
+                        ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) { console.error(error); }
+        }
+
+        function openReplyModal(id, content) {
+            selectedMessageId = id;
+            document.getElementById('originalMessage').textContent = `RE: "${content}"`;
+            document.getElementById('replyModal').style.display = 'flex';
+        }
+
+        function closeReplyModal() {
+            document.getElementById('replyModal').style.display = 'none';
+        }
+
+        async function submitResponse() {
+            const responseText = document.getElementById('adminResponse').value;
+            if (!responseText) return showNotification('Please provide a response.', 'error');
+
+            try {
+                await api.admin.resolveMessage(selectedMessageId);
+                showNotification('Message resolved and response sent!');
+                closeReplyModal();
+                loadMessages();
+            } catch (error) { showNotification(error.message, 'error'); }
+        }
+
+        window.onload = loadMessages;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Monitoring | Admin</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <script src="../js/theme.js"></script>
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <style>
+        .search-bar {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .log-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .log-content {
+            background: var(--bg-dark);
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: var(--radius-md);
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+
+<body style="background: var(--bg-darker); color: var(--text-main);">
+    <div style="display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;">
+        <aside style="background: var(--bg-dark); border-right: 1px solid var(--border-color); padding: 20px;">
+            <div class="logo" style="font-size: 18px; margin-bottom: 40px; color: var(--neon-green);">ADMIN PANEL</div>
+            <nav>
+                <a href="index.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Overview</a>
+                <a href="quests.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Quests</a>
+                <a href="users.html"
+                    style="display: block; padding: 12px; color: var(--neon-green); background: var(--card-bg); border-radius: 4px; text-decoration: none;">Users</a>
+                <a href="reviews.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Moderation</a>
+                <a href="redemptions.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Transactions</a>
+                <a href="messages.html"
+                    style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">Support</a>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                <a href="../dashboard.html" style="display: block; padding: 12px; color: var(--text-secondary); text-decoration: none;">&#8592; Back to User App</a>
+                <button onclick="adminLogout()" style="display: block; width: 100%; padding: 12px; color: #ff4d4d; background: rgba(255,77,77,0.1); border: 1px solid #ff4d4d; border-radius: 4px; text-align: left; cursor: pointer; font-size: 15px; font-family: inherit; margin-top: 8px;">&#x2715; Logout</button>
+            </nav>
+        </aside>
+
+        <main style="padding: 40px;">
+            <h2 style="margin-bottom: 30px;">Warrior Directory &amp; Activity Logs</h2>
+
+            <input type="text" id="userSearch" class="search-bar" placeholder="🔍 Search warriors by name or email..."
+                oninput="filterUsers()">
+
+            <div class="card">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="text-align: left; color: var(--text-muted); font-size: 12px;">
+                            <th style="padding: 12px;">WARRIOR</th>
+                            <th>BIOMETRICS</th>
+                            <th>GOAL</th>
+                            <th>STATS & QUESTS</th>
+                            <th>LEVEL</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Activity Log Modal -->
+    <div id="logModal" class="log-modal">
+        <div class="log-content card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 id="logTitle">Activity Logs</h3>
+                <button onclick="closeLogModal()" class="btn btn-outline btn-sm">Close</button>
+            </div>
+            <div id="logList"></div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        if (!isAdmin()) window.location.href = 'login.html';
+
+        let allUsers = [];
+
+        async function loadUsers() {
+            try {
+                allUsers = await api.admin.getUsers();
+                renderUsers(allUsers);
+            } catch (error) { console.error(error); }
+        }
+
+        function renderUsers(users) {
+            const table = document.getElementById('usersTable');
+            table.innerHTML = users.map(u => `
+                <tr style="border-top: 1px solid var(--border-color);">
+                    <td style="padding: 15px;">
+                        <div style="font-weight: bold;">${u.username}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${u.email}</div>
+                    </td>
+                    <td style="font-size: 13px;">H: ${u.height || '--'}cm | W: ${u.weight || '--'}kg</td>
+                    <td style="font-size: 13px;">${u.fitness_goal || 'General Health'}</td>
+                    <td style="font-size: 13px;">
+                        <div style="color: var(--neon-green);">${u.total_xp} XP</div>
+                        <div style="color: var(--gold);">${u.health_points} HP</div>
+                        <div style="font-size: 11px; margin-top: 4px; color: var(--gold);">🚩 ${u.quests_completed || 0} Quests</div>
+                    </td>
+                    <td>
+                        <span style="background: var(--neon-green); color: var(--bg-dark); padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 12px;">
+                            Lvl ${u.current_level}
+                        </span>
+                    </td>
+                    <td>
+                        <button onclick="viewLogs(${u.id}, '${u.username}')" class="btn btn-outline btn-sm">Logs</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const term = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(u =>
+                u.username.toLowerCase().includes(term) ||
+                u.email.toLowerCase().includes(term)
+            );
+            renderUsers(filtered);
+        }
+
+        async function viewLogs(userId, username) {
+            document.getElementById('logTitle').textContent = `Activity Logs: ${username}`;
+            document.getElementById('logList').innerHTML = '<p>Retrieving ancient scrolls...</p>';
+            document.getElementById('logModal').style.display = 'flex';
+
+            try {
+                const logs = await api.admin.getUserWorkouts(userId);
+                if (logs.length === 0) {
+                    document.getElementById('logList').innerHTML = '<p style="color: var(--text-muted);">No activity recorded yet.</p>';
+                    return;
+                }
+
+                document.getElementById('logList').innerHTML = logs.map(l => `
+                    <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                        <div>
+                            <div style="font-weight: bold;">${l.workout_type}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${l.duration} mins • ${l.calories_burned} kcal</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: var(--neon-green); font-size: 13px;">+${l.xp_earned} XP</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">${new Date(l.date).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('logList').innerHTML = '<p style="color: #ff4d4d;">Failed to load logs.</p>';
+            }
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').style.display = 'none';
+        }
+
+        window.onload = loadUsers;
+    </script>
+</body>
+
+</html>

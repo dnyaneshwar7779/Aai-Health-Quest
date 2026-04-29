@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Workout | Aai Health Quest</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: var(--spacing-xl) auto;
+        }
+
+        .xp-preview {
+            background: var(--bg-dark);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-sm);
+            margin-top: var(--spacing-md);
+            border-left: 4px solid var(--neon-green);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">AAI HEALTH QUEST</a>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                <button onclick="logout()" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="form-container card animate-slide-up">
+            <h2 style="margin-bottom: var(--spacing-md);">Record Your Effort</h2>
+            <form id="workoutForm">
+                <div class="form-group">
+                    <label class="form-label">Activity Type</label>
+                    <select id="workoutType" class="form-input" required>
+                        <option value="Running">Running 🏃</option>
+                        <option value="Walking">Walking 🚶</option>
+                        <option value="Cycling">Cycling 🚴</option>
+                        <option value="Strength Training">Strength Training 🏋️</option>
+                        <option value="Yoga">Yoga 🧘</option>
+                        <option value="Swimming">Swimming 🏊</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Duration (minutes)</label>
+                    <input type="number" id="duration" class="form-input" required min="1" placeholder="30">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Steps (optional)</label>
+                    <input type="number" id="steps" class="form-input" placeholder="5000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Calories Burned (optional)</label>
+                    <input type="number" id="calories" class="form-input" placeholder="250">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="date" class="form-input" required>
+                </div>
+
+                <div class="xp-preview">
+                    <p style="font-size: 14px; color: var(--text-secondary);">Estimated Rewards:</p>
+                    <h3 id="xpEstimate" style="color: var(--neon-green);">0 XP</h3>
+                    <p id="hpEstimate" style="font-size: 12px; color: var(--gold);">+0 Health Points</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--spacing-lg);">Save
+                    Workout</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        if (!isLoggedIn()) window.location.href = 'login.html';
+
+        // Set default date to today
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Real-time XP preview
+        function updateXPPreview() {
+            const duration = parseInt(document.getElementById('duration').value) || 0;
+            const steps = parseInt(document.getElementById('steps').value) || 0;
+            const calories = parseInt(document.getElementById('calories').value) || 0;
+
+            let xp = 0;
+            xp += Math.floor(duration / 10) * 10;
+            xp += Math.floor(calories / 10);
+            xp += Math.floor(steps / 100);
+
+            document.getElementById('xpEstimate').textContent = `${xp} XP`;
+            document.getElementById('hpEstimate').textContent = `+${Math.floor(xp / 10)} Health Points`;
+        }
+
+        ['duration', 'steps', 'calories'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateXPPreview);
+        });
+
+        document.getElementById('workoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Syncing...';
+
+            const workoutData = {
+                workout_type: document.getElementById('workoutType').value,
+                duration: parseInt(document.getElementById('duration').value),
+                steps_count: parseInt(document.getElementById('steps').value) || 0,
+                calories_burned: parseInt(document.getElementById('calories').value) || 0,
+                date: document.getElementById('date').value
+            };
+
+            try {
+                const response = await api.logWorkout(workoutData);
+
+                showNotification(`Earned ${response.xp_earned} XP and ${response.hp_earned} HP!`);
+
+                if (response.levelUp) {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 150,
+                            spread: 70,
+                            origin: { y: 0.6 },
+                            colors: ['#00FF41', '#FFD700', '#ffffff']
+                        });
+                        showNotification(`LEVEL UP! You are now Level ${response.newLevel}`, 'success');
+                    }, 500);
+                }
+
+                setTimeout(() => window.location.href = 'dashboard.html', 2000);
+            } catch (error) {
+                showNotification(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Save Workout';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Aai Health Quest</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <script src="../js/theme.js"></script>
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+
+        .admin-glow {
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green-shadow);
+        }
+    </style>
+</head>
+
+<body style="background: var(--bg-darker);">
+    <main class="container">
+        <div class="auth-container card admin-glow animate-slide-up">
+            <h2 style="margin-bottom: var(--spacing-md); text-align: center; color: var(--neon-green);">Admin Command
+                Access</h2>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Admin Email</label>
+                    <input type="email" id="email" class="form-input" required placeholder="admin@aaihealth.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Access Key</label>
+                    <input type="password" id="password" class="form-input" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; margin-top: var(--spacing-md);">Authenticate</button>
+            </form>
+            <p style="text-align: center; margin-top: var(--spacing-md); color: var(--text-muted); font-size: 12px;">
+                Restricted Area. Authorized Access Only.
+            </p>
+        </div>
+    </main>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            const credentials = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await api.login(credentials);
+                setToken(response.token);
+
+                if (!isAdmin()) {
+                    removeToken();
+                    throw new Error('Access denied. Admin rights required.');
+                }
+
+                showNotification('Admin authenticated! Redirecting...');
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            } catch (error) {
+                showNotification(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Authenticate';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard | Aai Health Quest</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 var(--spacing-sm);
+        }
+
+        .leaderboard-table th {
+            text-align: left;
+            padding: var(--spacing-md);
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .leaderboard-row {
+            background-color: var(--card-bg);
+            transition: transform 0.2s ease;
+        }
+
+        .leaderboard-row:hover {
+            transform: scale(1.01);
+            background-color: var(--card-hover);
+        }
+
+        .leaderboard-row td {
+            padding: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .leaderboard-row td:first-child {
+            border-left: 1px solid var(--border-color);
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+            font-family: var(--font-heading);
+            font-weight: 700;
+        }
+
+        .leaderboard-row td:last-child {
+            border-right: 1px solid var(--border-color);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            text-align: right;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background: var(--bg-darker);
+        }
+
+        .rank-1 .rank-badge {
+            color: var(--gold);
+            border: 1px solid var(--gold);
+        }
+
+        .rank-2 .rank-badge {
+            color: #C0C0C0;
+            border: 1px solid #C0C0C0;
+        }
+
+        .rank-3 .rank-badge {
+            color: #CD7F32;
+            border: 1px solid #CD7F32;
+        }
+
+        .user-highlight {
+            border: 1px solid var(--neon-green) !important;
+            box-shadow: 0 0 10px var(--neon-green-shadow);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">AAI HEALTH QUEST</a>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+            <h2>Global Rankings</h2>
+            <button onclick="openRatingModal()" class="btn btn-gold btn-sm">Submit Rating</button>
+        </div>
+
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Warrior</th>
+                    <th>Workouts</th>
+                    <th>Level</th>
+                    <th style="text-align: right;">Total XP</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+                <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Rating Modal -->
+    <div id="ratingModal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px; width: 90%;">
+            <h3>Warrior Self-Rating</h3>
+            <p style="font-size: 14px; margin: var(--spacing-md) 0;">Rate your health progress (1-5 stars). Pending
+                admin approval.</p>
+            <div
+                style="display: flex; gap: var(--spacing-md); justify-content: center; font-size: 32px; margin: var(--spacing-lg) 0;">
+                <span class="star" onclick="setRating(1)" style="cursor: pointer;">⭐</span>
+                <span class="star" onclick="setRating(2)" style="cursor: pointer;">⭐</span>
+                <span class="star" onclick="setRating(3)" style="cursor: pointer;">⭐</span>
+                <span class="star" onclick="setRating(4)" style="cursor: pointer;">⭐</span>
+                <span class="star" onclick="setRating(5)" style="cursor: pointer;">⭐</span>
+            </div>
+            <div style="display: flex; gap: var(--spacing-sm);">
+                <button onclick="closeRatingModal()" class="btn btn-outline" style="flex: 1;">Cancel</button>
+                <button onclick="submitUserRating()" class="btn btn-primary" style="flex: 1;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        let currentRating = 0;
+        const user = getUser();
+        const navLinks = document.getElementById('navLinks');
+
+        if (isLoggedIn()) {
+            navLinks.innerHTML = `
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+                <a href="redemption.html" class="nav-link">Store</a>
+                <button onclick="logout()" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+            `;
+        } else {
+            navLinks.innerHTML = `
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+                <a href="login.html" class="btn btn-outline" style="padding: 8px 16px;">Login</a>
+                <a href="register.html" class="btn btn-primary" style="padding: 8px 16px;">Sign Up</a>
+            `;
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const leaderboard = await api.getLeaderboard();
+                const tbody = document.getElementById('leaderboardBody');
+                tbody.innerHTML = leaderboard.map((entry, index) => {
+                    const isCurrentUser = user && entry.user_id === user.id;
+                    const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                    return `
+                        <tr class="leaderboard-row ${rankClass} ${isCurrentUser ? 'user-highlight' : ''} animate-fade-in" style="animation-delay: ${index * 0.05}s">
+                            <td><span class="rank-badge">${index + 1}</span></td>
+                            <td>
+                                <div style="font-weight: bold; color: ${isCurrentUser ? 'var(--neon-green)' : 'white'}">${entry.username}</div>
+                                <div style="font-size: 10px; color: var(--text-muted)">${'⭐'.repeat(Math.round(entry.rating || 0))}</div>
+                            </td>
+                            <td>
+                                <span style="color: var(--gold); font-weight: bold;">${entry.workouts_completed || 0}</span> Completed
+                            </td>
+                            <td>Level ${entry.current_level}</td>
+                            <td>${entry.total_xp.toLocaleString()} XP</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function openRatingModal() {
+            if (!isLoggedIn()) return window.location.href = 'login.html';
+            document.getElementById('ratingModal').style.display = 'flex';
+        }
+
+        function closeRatingModal() {
+            document.getElementById('ratingModal').style.display = 'none';
+        }
+
+        function setRating(val) {
+            currentRating = val;
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((s, i) => {
+                s.style.opacity = i < val ? '1' : '0.3';
+            });
+        }
+
+        async function submitUserRating() {
+            if (currentRating === 0) return showNotification('Please select a rating', 'error');
+            try {
+                await api.submitRating(currentRating);
+                showNotification('Rating submitted! Visibility pending admin approval.');
+                closeRatingModal();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+
+        window.onload = loadLeaderboard;
+    </script>
+</body>
+
+</html>

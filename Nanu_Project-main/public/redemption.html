@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redemption Store | Aai Health Quest</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .reward-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .hp-balance-card {
+            background: linear-gradient(135deg, var(--gold), #daa520);
+            color: var(--bg-darker);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--glow-gold);
+        }
+
+        .reward-price {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--gold);
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">AAI HEALTH QUEST</a>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="quests.html" class="nav-link">Quests</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                <a href="redemption.html" class="nav-link active">Store</a>
+                <button onclick="logout()" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hp-balance-card animate-slide-up">
+            <div>
+                <p style="text-transform: uppercase; font-size: 12px; font-weight: bold; opacity: 0.8;">Health Points
+                    Balance</p>
+                <h2 id="balanceDisplay" style="font-size: 48px; margin: 0;">0 HP</h2>
+            </div>
+            <div style="font-size: 40px;">💎</div>
+        </div>
+
+        <h2 style="margin-bottom: var(--spacing-lg);">Available Rewards</h2>
+        <div id="rewardGrid" class="reward-grid">
+            <!-- Data loaded here -->
+        </div>
+
+        <h2 style="margin: var(--spacing-xl) 0 var(--spacing-lg);">Redemption History</h2>
+        <div id="historyList">
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">No redemptions yet.</p>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px; width: 90%;">
+            <h3>Confirm Redemption</h3>
+            <p id="confirmText" style="margin: var(--spacing-md) 0; color: var(--text-secondary);"></p>
+            <div style="display: flex; gap: var(--spacing-sm);">
+                <button onclick="closeModal()" class="btn btn-outline" style="flex: 1;">Cancel</button>
+                <button id="confirmBtn" class="btn btn-gold" style="flex: 1;">Redeem</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        if (!isLoggedIn()) window.location.href = 'login.html';
+
+        let selectedReward = null;
+
+        async function initStore() {
+            try {
+                // Get Profile for balance
+                const profile = await api.getProfile();
+                document.getElementById('balanceDisplay').textContent = `${profile.health_points} HP`;
+
+                // Get Rewards
+                const rewards = await api.getRewards();
+                const grid = document.getElementById('rewardGrid');
+                grid.innerHTML = rewards.map(r => `
+                    <div class="card animate-fade-in">
+                        <div style="font-size: 32px; margin-bottom: 10px;">${getRewardIcon(r.type)}</div>
+                        <h4>${r.name}</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin: 5px 0 15px;">${getRewardDesc(r.type)}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="reward-price">${r.points} HP</span>
+                            <button onclick="openConfirm(${JSON.stringify(r).replace(/"/g, '&quot;')})" 
+                                    class="btn btn-primary btn-sm" 
+                                    ${profile.health_points < r.points ? 'disabled' : ''}>
+                                ${profile.health_points < r.points ? 'Insufficient' : 'Redeem'}
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Get History
+                const history = await api.getRedemptionHistory();
+                if (history.length > 0) {
+                    document.getElementById('historyList').innerHTML = history.map(h => `
+                        <div class="card" style="margin-bottom: 10px; padding: 15px; border-left: 4px solid var(--gold);">
+                            <div style="display: flex; justify-content: space-between;">
+                                <strong>${h.reward_name}</strong>
+                                <span style="color: var(--text-muted); font-size: 12px;">${new Date(h.redeemed_at).toLocaleDateString()}</span>
+                            </div>
+                            <p style="font-size: 12px; color: var(--gold);">${h.points_spent} HP • ${h.status}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function getRewardIcon(type) {
+            switch (type) {
+                case 'subscription': return '🎫';
+                case 'virtual_item': return '✨';
+                case 'discount': return '🏷️';
+                default: return '🎁';
+            }
+        }
+
+        function getRewardDesc(type) {
+            switch (type) {
+                case 'subscription': return 'Unlock premium training plans and ad-free experience.';
+                case 'virtual_item': return 'Customized aesthetic for your warrior profile.';
+                case 'discount': return 'Save money at our partner fitness centers.';
+                default: return 'Special reward for your dedication.';
+            }
+        }
+
+        function openConfirm(reward) {
+            selectedReward = reward;
+            document.getElementById('confirmText').textContent = `Redeem "${reward.name}" for ${reward.points} Health Points?`;
+            document.getElementById('confirmModal').style.display = 'flex';
+
+            document.getElementById('confirmBtn').onclick = processRedemption;
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        async function processRedemption() {
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            try {
+                await api.redeemPoints({
+                    rewardId: selectedReward.id,
+                    rewardName: selectedReward.name,
+                    pointsSpent: selectedReward.points,
+                    rewardType: selectedReward.type
+                });
+
+                showNotification('Reward successfully redeemed!', 'success');
+                closeModal();
+                initStore();
+            } catch (error) {
+                showNotification(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Redeem';
+            }
+        }
+
+        window.onload = initStore;
+    </script>
+</body>
+
+</html>
