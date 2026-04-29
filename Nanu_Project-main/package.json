@@ -1,5 +1,8 @@
 {
-  "name": "jayshree-shinde-project",
+  "engines":{
+    "node": "22.19.0"
+  },
+  "name": "nanu-project",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
